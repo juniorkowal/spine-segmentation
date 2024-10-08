@@ -71,7 +71,7 @@ def compute_bbox3d(tensor: torch.Tensor, threshold: Union[float, str] = 0.5, for
         max_coords = torch.max(nonzero_indices, dim=0)[0]
         
         if format == 'min_max':
-            bbox = (min_coords, max_coords.numpy())
+            bbox = (tuple(min_coords.numpy()), tuple(max_coords.numpy()))
         elif format == 'center_whd':
             center = (min_coords + max_coords) / 2.0
             width = max_coords[0] - min_coords[0] + 1.0
@@ -98,7 +98,7 @@ def create_bbox_image(bbox: Tuple[Tuple[int, int, int], Tuple[int, int, int]], s
     """
     bbox_image = torch.zeros(shape, dtype=torch.uint8)
 
-    min_coords, max_coords = bbox
+    min_coords, max_coords = bbox[0], bbox[1]
 
     x_indices = torch.arange(min_coords[0], max_coords[0])
     y_indices = torch.arange(min_coords[1], max_coords[1])

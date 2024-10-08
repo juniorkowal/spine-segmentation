@@ -1,23 +1,26 @@
+import argparse
 import os
 import random
 import re
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchio as tio
+import wandb
 from dataloader import VerSe, h5VerSe
 from metrics.metric_handler import MetricHandler
+from ptflops import get_model_complexity_info
 from torch.utils.data import DataLoader
+from torchinfo import summary
 from tqdm.autonotebook import tqdm
+from utils.constants import DEVICE, H5, MODELS_PATH, NUM_WORKERS
+from networks import *
+
 # from tqdm.notebook import tqdm
 
-from utils.constants import DEVICE, H5, MODELS_PATH, NUM_WORKERS
-import wandb
-from torchinfo import summary
-from ptflops import get_model_complexity_info
 
 
 def SET_SEED(seed: int):
@@ -234,7 +237,7 @@ def train_loop(config: dict,
     summary(model=model, input_size=(1, 1, *input_shape)) # B C H W D
     model.to(DEVICE)
 
-    _, train_transform, val_transform, _, _  = transforms_func(data_shape=input_shape)
+    _, train_transform, val_transform, _, _  = transforms_func
     train_loader, val_loader = get_dataloaders(train_transform, val_transform, config)
     last_epoch = load_last_model(model, optimizer, scheduler, model_name)
 
@@ -274,3 +277,35 @@ def train_loop(config: dict,
             torch.cuda.empty_cache()
 
     wandb.finish() if use_wandb else None
+
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description="Heatmap Training Configuration")
+
+    parser.add_argument('--data_path', type=str, required=True, help='Path to the dataset')
+    parser.add_argument('--model_name', type=str, required=True, help='Name of the model for saving/loading')
+    parser.add_argument('--epochs', type=int, default=200, help='Number of epochs for training')
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch size for training')
+    parser.add_argument('--lr', type=float, default=1.0, help='Learning rate for the optimizer')
+    parser.add_argument('--input_shape', type=int, nargs=3, default=(64, 64, 128), help='Input shape for the model')
+    parser.add_argument('--model', type=str, default='UNet', 
+                        choices=['AttentionUNet3D', 'SegFormer3D', 'SwinUNetR', 'UNet'], 
+                        help='Model architecture')
+    parser.add_argument('--early_stopping', type=int, default=30, help='Early stopping criteria')
+    parser.add_argument('--dataset_edition', type=int, default=19, help='VerSe dataset edition.')
+    parser.add_argument('--use_wandb', type=bool, default=False, help='Use wandb for logging.')
+
+    return parser.parse_args()
+
+
+def get_model(args):
+    if args.model == 'AttentionUNet3D':
+        model = AttentionUNet3D(in_channels=1, out_channels=1).to(DEVICE)
+    elif args.model == 'SegFormer3D':
+        model = SegFormer3D(in_channels=1, num_classes=1).to(DEVICE)
+    elif args.model == 'SwinUNetR':
+        model = MonaiSwinUNetR(img_size=args.patch_size, in_channels=1, out_channels=1).to(DEVICE)
+    elif args.model == 'UNet':
+        model = MonaiUNet(in_channels=1, class_num=1).to(DEVICE)
+    return model
