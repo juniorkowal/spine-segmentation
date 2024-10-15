@@ -238,8 +238,9 @@ class Decoder(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size=3,
-                 scale_factor=(2, 2, 2), basic_module=DoubleConv, conv_layer_order='crg', num_groups=8):
+                 scale_factor=(2, 2, 2), basic_module=DoubleConv, conv_layer_order='crg', num_groups=8, **kwargs):
         super(Decoder, self).__init__()
+
         if basic_module == DoubleConv:
             # if DoubleConv is the basic_module use nearest neighbor interpolation for upsampling
             self.upsample = None
@@ -258,7 +259,7 @@ class Decoder(nn.Module):
             # adapt the number of in_channels for the ExtResNetBlock
             in_channels = out_channels
 
-        self.scse = SCA3D(in_channels)
+        self.scse = SCA3D(in_channels, **kwargs)
 
         self.basic_module = basic_module(in_channels, out_channels,
                                          encoder=False,
