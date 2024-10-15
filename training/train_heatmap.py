@@ -1,5 +1,4 @@
 import pytest
-
 pytest.main([__file__])
 
 import os

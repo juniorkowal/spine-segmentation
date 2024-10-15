@@ -1,4 +1,4 @@
-from networks.attention_unet import AttentionUNet3D
+from networks.attention_unet.attention_unet_3d import AttentionUNet3D
 from networks.munet import MUNet
 from networks.segformer3d import SegFormer3D
 from networks.swinunetr import MonaiSwinUNetR
