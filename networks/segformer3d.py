@@ -29,7 +29,7 @@ def build_segformer3d_model(config=None):
 class SegFormer3D(nn.Module):
     def __init__(
         self,
-        in_channels: int = 4,
+        in_channels: int = 1,
         sr_ratios: list = [4, 2, 1, 1],
         embed_dims: list = [32, 64, 160, 256],
         patch_kernel_size: list = [7, 3, 3, 3],
@@ -39,8 +39,9 @@ class SegFormer3D(nn.Module):
         num_heads: list = [1, 2, 5, 8],
         depths: list = [2, 2, 2, 2],
         decoder_head_embedding_dim: int = 256,
-        num_classes: int = 3,
+        num_classes: int = 1,
         decoder_dropout: float = 0.0,
+        **kwargs
     ):
         """
         in_channels: number of the input channels
@@ -69,6 +70,7 @@ class SegFormer3D(nn.Module):
             mlp_ratios=mlp_ratios,
             num_heads=num_heads,
             depths=depths,
+            **kwargs
         )
         # decoder takes in the feature maps in the reversed order
         reversed_embed_dims = embed_dims[::-1]
@@ -295,6 +297,11 @@ class MixVisionTransformer(nn.Module):
         mlp_ratios: list = [2, 2, 2, 2],
         num_heads: list = [1, 2, 5, 8],
         depths: list = [2, 2, 2, 2],
+        disable_tf1: bool = False,
+        disable_tf2: bool = False,
+        disable_tf3: bool = False,
+        disable_tf4: bool = False,
+        **kwargs
     ):
         """
         in_channels: number of the input channels
@@ -309,6 +316,11 @@ class MixVisionTransformer(nn.Module):
         depth: number of attention layers
         """
         super().__init__()
+
+        self.disable_tf1 = disable_tf1
+        self.disable_tf2 = disable_tf2
+        self.disable_tf3 = disable_tf3
+        self.disable_tf4 = disable_tf4
 
         # patch embedding at different Pyramid level
         self.embed_1 = PatchEmbedding(
@@ -341,63 +353,67 @@ class MixVisionTransformer(nn.Module):
         )
 
         # block 1
-        self.tf_block1 = nn.ModuleList(
-            [
-                TransformerBlock(
-                    embed_dim=embed_dims[0],
-                    num_heads=num_heads[0],
-                    mlp_ratio=mlp_ratios[0],
-                    sr_ratio=sr_ratios[0],
-                    qkv_bias=True,
-                )
-                for _ in range(depths[0])
-            ]
-        )
+        if not disable_tf1:
+            self.tf_block1 = nn.ModuleList(
+                [
+                    TransformerBlock(
+                        embed_dim=embed_dims[0],
+                        num_heads=num_heads[0],
+                        mlp_ratio=mlp_ratios[0],
+                        sr_ratio=sr_ratios[0],
+                        qkv_bias=True,
+                    )
+                    for _ in range(depths[0])
+                ]
+            )
         self.norm1 = nn.LayerNorm(embed_dims[0])
 
         # block 2
-        self.tf_block2 = nn.ModuleList(
-            [
-                TransformerBlock(
-                    embed_dim=embed_dims[1],
-                    num_heads=num_heads[1],
-                    mlp_ratio=mlp_ratios[1],
-                    sr_ratio=sr_ratios[1],
-                    qkv_bias=True,
-                )
-                for _ in range(depths[1])
-            ]
-        )
+        if not disable_tf2:
+            self.tf_block2 = nn.ModuleList(
+                [
+                    TransformerBlock(
+                        embed_dim=embed_dims[1],
+                        num_heads=num_heads[1],
+                        mlp_ratio=mlp_ratios[1],
+                        sr_ratio=sr_ratios[1],
+                        qkv_bias=True,
+                    )
+                    for _ in range(depths[1])
+                ]
+            )
         self.norm2 = nn.LayerNorm(embed_dims[1])
 
         # block 3
-        self.tf_block3 = nn.ModuleList(
-            [
-                TransformerBlock(
-                    embed_dim=embed_dims[2],
-                    num_heads=num_heads[2],
-                    mlp_ratio=mlp_ratios[2],
-                    sr_ratio=sr_ratios[2],
-                    qkv_bias=True,
-                )
-                for _ in range(depths[2])
-            ]
-        )
+        if not disable_tf3:
+            self.tf_block3 = nn.ModuleList(
+                [
+                    TransformerBlock(
+                        embed_dim=embed_dims[2],
+                        num_heads=num_heads[2],
+                        mlp_ratio=mlp_ratios[2],
+                        sr_ratio=sr_ratios[2],
+                        qkv_bias=True,
+                    )
+                    for _ in range(depths[2])
+                ]
+            )
         self.norm3 = nn.LayerNorm(embed_dims[2])
 
         # block 4
-        self.tf_block4 = nn.ModuleList(
-            [
-                TransformerBlock(
-                    embed_dim=embed_dims[3],
-                    num_heads=num_heads[3],
-                    mlp_ratio=mlp_ratios[3],
-                    sr_ratio=sr_ratios[3],
-                    qkv_bias=True,
-                )
-                for _ in range(depths[3])
-            ]
-        )
+        if not disable_tf4:
+            self.tf_block4 = nn.ModuleList(
+                [
+                    TransformerBlock(
+                        embed_dim=embed_dims[3],
+                        num_heads=num_heads[3],
+                        mlp_ratio=mlp_ratios[3],
+                        sr_ratio=sr_ratios[3],
+                        qkv_bias=True,
+                    )
+                    for _ in range(depths[3])
+                ]
+            )
         self.norm4 = nn.LayerNorm(embed_dims[3])
 
     def forward(self, x):
@@ -411,8 +427,9 @@ class MixVisionTransformer(nn.Module):
         x = self.embed_1(x)
         B, N, C = x.shape
         n = cube_root(N)
-        for i, blk in enumerate(self.tf_block1):
-            x = blk(x)
+        if not self.disable_tf1:
+            for i, blk in enumerate(self.tf_block1):
+                x = blk(x)
         x = self.norm1(x)
         # (B, N, C) -> (B, D, H, W, C) -> (B, C, D, H, W)
         x = x.reshape(B, n, n, n, -1).permute(0, 4, 1, 2, 3).contiguous()
@@ -422,8 +439,9 @@ class MixVisionTransformer(nn.Module):
         x = self.embed_2(x)
         B, N, C = x.shape
         n = cube_root(N)
-        for i, blk in enumerate(self.tf_block2):
-            x = blk(x)
+        if not self.disable_tf2:
+            for i, blk in enumerate(self.tf_block2):
+                x = blk(x)
         x = self.norm2(x)
         # (B, N, C) -> (B, D, H, W, C) -> (B, C, D, H, W)
         x = x.reshape(B, n, n, n, -1).permute(0, 4, 1, 2, 3).contiguous()
@@ -433,8 +451,9 @@ class MixVisionTransformer(nn.Module):
         x = self.embed_3(x)
         B, N, C = x.shape
         n = cube_root(N)
-        for i, blk in enumerate(self.tf_block3):
-            x = blk(x)
+        if not self.disable_tf3:
+            for i, blk in enumerate(self.tf_block3):
+                x = blk(x)
         x = self.norm3(x)
         # (B, N, C) -> (B, D, H, W, C) -> (B, C, D, H, W)
         x = x.reshape(B, n, n, n, -1).permute(0, 4, 1, 2, 3).contiguous()
@@ -444,8 +463,9 @@ class MixVisionTransformer(nn.Module):
         x = self.embed_4(x)
         B, N, C = x.shape
         n = cube_root(N)
-        for i, blk in enumerate(self.tf_block4):
-            x = blk(x)
+        if not self.disable_tf4:
+            for i, blk in enumerate(self.tf_block4):
+                x = blk(x)
         x = self.norm4(x)
         # (B, N, C) -> (B, D, H, W, C) -> (B, C, D, H, W)
         x = x.reshape(B, n, n, n, -1).permute(0, 4, 1, 2, 3).contiguous()
@@ -639,7 +659,37 @@ class SegFormerDecoderHead(nn.Module):
         return x
 
 ###################################################################################
+
+
+ablation_models_segformer3d = [
+        SegFormer3D(),  # Baseline
+        SegFormer3D(embed_dims=[16, 32, 80, 128]),  # Reduced Embedding Dimensions
+        SegFormer3D(embed_dims=[64, 128, 320, 512]),  # Increased Embedding Dimensions
+        SegFormer3D(sr_ratios=[2, 1, 1, 1]),  # Lower Spatial Reduction Ratios
+        SegFormer3D(sr_ratios=[8, 4, 2, 2]),  # Increased Spatial Reduction Ratios
+        SegFormer3D(num_heads=[1, 1, 2, 4]),  # Reduced Number of Attention Heads
+        SegFormer3D(num_heads=[2, 4, 8, 16]),  # Increased Number of Attention Heads
+        SegFormer3D(depths=[1, 1, 1, 1]),  # Shallower Network
+        SegFormer3D(depths=[3, 3, 3, 3]),  # Deeper Network
+        SegFormer3D(patch_kernel_size=[9, 5, 5, 5]),  # Larger Patch Kernel Size
+        SegFormer3D(patch_stride=[4, 2, 1, 1]),  # Less Aggressive Patch Stride
+        SegFormer3D(patch_padding=[0, 0, 0, 0]),  # No Patch Padding
+        SegFormer3D(mlp_ratios=[6, 6, 6, 6]),  # Higher MLP Ratios
+        SegFormer3D(mlp_ratios=[2, 2, 2, 2]),  # Lower MLP Ratios
+        SegFormer3D(decoder_dropout=0.1),  # Add Decoder Dropout 0.1
+        SegFormer3D(decoder_dropout=0.5),  # Add Decoder Dropout 0.5
+        SegFormer3D(decoder_head_embedding_dim=128),  # Smaller Decoder Head Embedding Dim
+        SegFormer3D(decoder_head_embedding_dim=512),  # Larger Decoder Head Embedding Dim
+        SegFormer3D(disable_tf1=True),  # Disable Transformer Block 1
+        SegFormer3D(disable_tf2=True),  # Disable Transformer Block 2
+        SegFormer3D(disable_tf3=True),  # Disable Transformer Block 3
+        SegFormer3D(disable_tf4=True),  # Disable Transformer Block 4
+    ]
+
+
+
 if __name__ == "__main__":
+    ablation_models = ablation_models_segformer3d
     input = torch.randint(
         low=0,
         high=255,
@@ -653,6 +703,17 @@ if __name__ == "__main__":
     from torchinfo import summary
     model = SegFormer3D(num_classes=1, in_channels=1)
     summary(model, input_size=(1,1,128,128,128))
+    import gc
 
+    with torch.no_grad():
+        for model in ablation_models:
+            print(model[0])
+            m = model[1].to('cuda')
+            summary(m, input_size=(1,1,128,128,128))
+            out = m(input)
+            del m
+            del out
+            gc.collect()
+            torch.cuda.empty_cache() 
 
 ###################################################################################
