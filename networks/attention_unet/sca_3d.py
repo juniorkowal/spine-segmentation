@@ -7,14 +7,20 @@ class SCA3D(nn.Module):
     def __init__(self, in_channels, reduction=16, 
                  channel_attention=True, 
                  spatial_attention=True,
-                 activation=nn.ReLU
-                 ):
+                 activation=nn.ReLU,
+                 pool=nn.AdaptiveAvgPool3d,
+                 **kwargs):
         super().__init__()
 
+        if hasattr(activation, 'inplace'):
+            activation_layer = activation(inplace=True)
+        else:
+            activation_layer = activation()
+            
         if channel_attention:
-            self.avg_pool = nn.AdaptiveAvgPool3d(1)
+            self.avg_pool = pool(1)
             self.channel_excitation = nn.Sequential(nn.Linear(in_channels, int(in_channels // reduction)),
-                                                    activation(inplace=True) if isinstance(activation, nn.ReLU) else activation(),#nn.ReLU(inplace=True),
+                                                    activation_layer,#nn.ReLU(inplace=True),
                                                     nn.Linear(int(in_channels // reduction), in_channels))
         
         if spatial_attention:

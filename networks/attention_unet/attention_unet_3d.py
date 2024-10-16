@@ -45,10 +45,10 @@ class AttentionUNet3D(nn.Module):
         for i, out_feature_num in enumerate(f_maps):
             if i == 0:
                 encoder = Encoder(in_channels, out_feature_num, apply_pooling=False, basic_module=DoubleConv,
-                                  conv_layer_order=layer_order, num_groups=num_groups)
+                                  conv_layer_order=layer_order, num_groups=num_groups,**kwargs)
             else:
                 encoder = Encoder(f_maps[i - 1], out_feature_num, basic_module=DoubleConv,
-                                  conv_layer_order=layer_order, num_groups=num_groups)
+                                  conv_layer_order=layer_order, num_groups=num_groups,**kwargs)
             encoders.append(encoder)
 
         self.encoders = nn.ModuleList(encoders)

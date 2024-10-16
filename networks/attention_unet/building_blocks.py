@@ -53,6 +53,12 @@ def create_conv(in_channels, out_channels, kernel_size, order, num_groups, paddi
                 modules.append(('batchnorm', nn.BatchNorm3d(in_channels)))
             else:
                 modules.append(('batchnorm', nn.BatchNorm3d(out_channels)))
+        elif char == 'i':
+            is_before_conv = i < order.index('c')
+            if is_before_conv:
+                modules.append(('batchnorm', nn.InstanceNorm3d(in_channels)))
+            else:
+                modules.append(('batchnorm', nn.InstanceNorm3d(out_channels)))
         else:
             raise ValueError("Unsupported layer type '{char}'. MUST be one of ['b', 'g', 'r', 'l', 'e', 'c']")
 
@@ -103,7 +109,7 @@ class DoubleConv(nn.Sequential):
         num_groups (int): number of groups for the GroupNorm
     """
 
-    def __init__(self, in_channels, out_channels, encoder, kernel_size=3, order='crg', num_groups=8):
+    def __init__(self, in_channels, out_channels, encoder, kernel_size=3, order='crg', num_groups=8, double_conv=True, **kwargs):
         super(DoubleConv, self).__init__()
         if encoder:
             # we're in the encoder path
@@ -117,13 +123,16 @@ class DoubleConv(nn.Sequential):
             conv1_in_channels, conv1_out_channels = in_channels, out_channels
             conv2_in_channels, conv2_out_channels = out_channels, out_channels
 
-        # conv1
-        self.add_module('SingleConv1',
-                        SingleConv(conv1_in_channels, conv1_out_channels, kernel_size, order, num_groups))
-        # conv2
-        self.add_module('SingleConv2',
-                        SingleConv(conv2_in_channels, conv2_out_channels, kernel_size, order, num_groups))
-
+        if double_conv:
+            # conv1
+            self.add_module('SingleConv1',
+                            SingleConv(conv1_in_channels, conv1_out_channels, kernel_size, order, num_groups))
+            # conv2
+            self.add_module('SingleConv2',
+                            SingleConv(conv2_in_channels, conv2_out_channels, kernel_size, order, num_groups))
+        else:
+            self.add_module('SingleConv1',
+                            SingleConv(conv1_in_channels, conv2_out_channels, kernel_size, order, num_groups))
 
 class ExtResNetBlock(nn.Module):
     """
@@ -194,7 +203,7 @@ class Encoder(nn.Module):
 
     def __init__(self, in_channels, out_channels, conv_kernel_size=3, apply_pooling=True,
                  pool_kernel_size=(2, 2, 2), pool_type='max', basic_module=DoubleConv, conv_layer_order='crg',
-                 num_groups=8):
+                 num_groups=8, **kwargs):
         super(Encoder, self).__init__()
         assert pool_type in ['max', 'avg']
         if apply_pooling:
@@ -209,7 +218,7 @@ class Encoder(nn.Module):
                                          encoder=True,
                                          kernel_size=conv_kernel_size,
                                          order=conv_layer_order,
-                                         num_groups=num_groups)
+                                         num_groups=num_groups, **kwargs)
 
     def forward(self, x):
         if self.pooling is not None:
@@ -265,7 +274,7 @@ class Decoder(nn.Module):
                                          encoder=False,
                                          kernel_size=kernel_size,
                                          order=conv_layer_order,
-                                         num_groups=num_groups)
+                                         num_groups=num_groups,**kwargs)
 
     def forward(self, encoder_features, x):
         if self.upsample is None:
