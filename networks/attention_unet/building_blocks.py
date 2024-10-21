@@ -56,9 +56,9 @@ def create_conv(in_channels, out_channels, kernel_size, order, num_groups, paddi
         elif char == 'i':
             is_before_conv = i < order.index('c')
             if is_before_conv:
-                modules.append(('batchnorm', nn.InstanceNorm3d(in_channels)))
+                modules.append(('instancenorm', nn.InstanceNorm3d(in_channels)))
             else:
-                modules.append(('batchnorm', nn.InstanceNorm3d(out_channels)))
+                modules.append(('instancenorm', nn.InstanceNorm3d(out_channels)))
         else:
             raise ValueError("Unsupported layer type '{char}'. MUST be one of ['b', 'g', 'r', 'l', 'e', 'c']")
 
