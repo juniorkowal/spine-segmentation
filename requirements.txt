@@ -16,3 +16,4 @@ scikit-image
 pytest
 ptflops
 bm4d
+timm
