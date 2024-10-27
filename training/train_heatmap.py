@@ -86,19 +86,4 @@ if __name__ == "__main__":
     SET_SEED(42)
     args = get_args()
     train_heatmap(args)
-
-    # shape = (64,64,128)
-    # preps = get_heatmap_prepro(shape)
-    # postpro = get_heatmap_postpro(shape)
-    # basic_transforms = heatmap_transforms(shape)
-
-    # # preprocessing experiments
-    # for i, preprocessing in enumerate(preps):
-    #     dataset_preprocessing(out_name=f"prep{i}",transform=preprocessing,edition=19)
-    #     train_heatmap(data_path=f'datasets/prep{i}/prep{i}.h5', transform=basic_transforms, model_name=f"prep{i}")
-
-    # for i, postpro in enumerate(postpro):
-    #     def transform_wrapper():
-    #         return None, postpro[0], postpro[1], None, None
-    #     train_heatmap(data_path='', transform=transform_wrapper, model_name=f"postpro{i}")
     

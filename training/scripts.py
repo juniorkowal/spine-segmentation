@@ -18,7 +18,8 @@ from torchinfo import summary
 from tqdm.autonotebook import tqdm
 from utils.constants import DEVICE, H5, MODELS_PATH, NUM_WORKERS
 from networks import *
-
+from networks.segformer3d import ablation_models_segformer3d as ablation_segformer
+from networks.attention_unet.ablation import ablation_list as ablation_att
 # from tqdm.notebook import tqdm
 
 
@@ -280,8 +281,19 @@ def train_loop(config: dict,
 
 
 
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+    if value.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif value.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+    
+
 def get_args():
-    parser = argparse.ArgumentParser(description="Heatmap Training Configuration")
+    parser = argparse.ArgumentParser(description="Training Configuration")
 
     parser.add_argument('--data_path', type=str, required=True, help='Path to the dataset')
     parser.add_argument('--model_name', type=str, required=True, help='Name of the model for saving/loading')
@@ -289,23 +301,27 @@ def get_args():
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size for training')
     parser.add_argument('--lr', type=float, default=1.0, help='Learning rate for the optimizer')
     parser.add_argument('--input_shape', type=int, nargs=3, default=(64, 64, 128), help='Input shape for the model')
-    parser.add_argument('--model', type=str, default='UNet', 
-                        choices=['AttentionUNet3D', 'SegFormer3D', 'SwinUNetR', 'UNet'], 
-                        help='Model architecture')
+    parser.add_argument('--model', type=str, default='UNet', help='Model architecture')
     parser.add_argument('--early_stopping', type=int, default=30, help='Early stopping criteria')
     parser.add_argument('--dataset_edition', type=int, default=19, help='VerSe dataset edition.')
-    parser.add_argument('--use_wandb', type=bool, default=False, help='Use wandb for logging.')
+    parser.add_argument('--use_wandb', type=str2bool, nargs='?', const=True, default=False,
+                    help='Use wandb for logging.')
 
     return parser.parse_args()
 
 
 def get_model(args):
     if args.model == 'AttentionUNet3D':
-        model = AttentionUNet3D(in_channels=1, out_channels=1).to(DEVICE)
+        model = AttentionUNet3D(in_channels=1, out_channels=1)
     elif args.model == 'SegFormer3D':
-        model = SegFormer3D(in_channels=1, num_classes=1).to(DEVICE)
+        model = SegFormer3D(in_channels=1, num_classes=1)
     elif args.model == 'SwinUNetR':
-        model = MonaiSwinUNetR(img_size=args.patch_size, in_channels=1, out_channels=1).to(DEVICE)
+        model = MonaiSwinUNetR(img_size=args.patch_size, in_channels=1, out_channels=1)
     elif args.model == 'UNet':
-        model = MonaiUNet(in_channels=1, class_num=1).to(DEVICE)
+        model = MonaiUNet(in_channels=1, class_num=1)
+    elif "ablation_segformer" in args.model:
+        model = ablation_segformer[int(args.model[-1])]
+    elif "ablation_attention" in args.model:
+        model = ablation_att[int(args.model[-1])]
+    model = model.to(DEVICE)
     return model

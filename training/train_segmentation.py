@@ -59,7 +59,8 @@ def train_segmentation(args):
                      transforms_func=transform_func,
                      visualize_func=visualize_spine_segmentation,
                      optimizer=optimizer,
-                     scheduler=scheduler)
+                     scheduler=scheduler,
+                     use_wandb=args.use_wandb)
 
     # test
     test_transform = transform_func[2]
@@ -120,30 +121,3 @@ if __name__ == "__main__":
     SET_SEED(42)
     args = get_args()
     train_segmentation(args)
-
-    # loss = DiceLoss()
-    # models = [
-    #     (AttentionUNet3D(1,1), (128,128,128)), # possible (128,128,128)
-    #     # (MUNet(), (64,64,64)), #b (64,64,64)
-    #     # (SegFormer3D(in_channels=1, num_classes=1), (128,128,128)), # possible (128,128,128)
-    #     # (SwinMUNETR(img_size=(64,64,64), in_channels=1, out_channels=1), (64,64,64)), #b
-    #     # (MonaiSwinUNetR(input_size=(64,64,64)), (64,64,64)), #b (96,96,96)
-    #     # (MonaiVNet(), (96,96,96)), #b (96,96,96)
-    #     # (MonaiUNet(), (128,128,128)),
-    #     # (UNet3Plus_modified(), (32,32,32)), #b (32,32,32)
-    #     ######(UNet3Plus_modified(), (96,96,96)), #b (32,32,32)
-
-    #     # MonaiUNetR(input_size=(96,96,96)), #b
-
-    #     ]
-    # shapes = []
-    # for model, patch_size in models:
-    #     # summary(model, input_size=(1,1,128,128,128))
-    #     name = model.__class__.__name__.replace('Monai', '')
-    #     name += '0LAMBDA_LAYERNORM_'
-    #     print(name)
-    #     train_segmentation(data_path='datasets/seg_bm4d/seg_bm4d.h5', model=model, model_name=name, transform_func=binary_segmentation_transforms, loss_class=loss, patch_size=patch_size)
-    #     # train_segmentation(data_path='/kaggle/input/seg-bm4d/seg_bm4d.h5', model=model, model_name=name, transform_func=binary_segmentation_transforms, loss_class=loss, patch_size=patch_size)
-    #     # exit()
-    #     torch.cuda.empty_cache()
-
