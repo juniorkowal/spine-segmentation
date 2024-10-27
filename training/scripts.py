@@ -316,9 +316,15 @@ def get_model(args):
     elif args.model == 'SegFormer3D':
         model = SegFormer3D(in_channels=1, num_classes=1)
     elif args.model == 'SwinUNetR':
-        model = MonaiSwinUNetR(img_size=args.patch_size, in_channels=1, out_channels=1)
+        model = MonaiSwinUNetR(img_size=args.input_shape, in_channels=1, out_channels=1)
     elif args.model == 'UNet':
         model = MonaiUNet(in_channels=1, class_num=1)
+    elif args.model == 'MUNet':
+        model = MUNet(in_channels=1, out_channels=1)
+    elif args.model == 'UNetR':
+        model = MonaiUNetR(input_size=args.input_shape)
+    elif args.model == 'VNet':
+        model = MonaiVNet()
     elif "ablation_segformer" in args.model:
         model = ablation_segformer[int(args.model[-1])]
     elif "ablation_attention" in args.model:
