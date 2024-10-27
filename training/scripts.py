@@ -221,7 +221,7 @@ def train_loop(config: dict,
     config['params'] = '{:<30}  {:<8}'.format('Number of parameters: ', params)
 
     config['optimizer'] = optimizer.__class__.__name__
-    config['architecture']: model.__class__.__name__
+    config['architecture']: model.__class__.__name__ # type: ignore
 
     if scheduler:
         config['scheduler'] = scheduler.__class__.__name__

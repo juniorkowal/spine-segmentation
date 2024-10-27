@@ -6,8 +6,13 @@ This repository is a part of my **Master's Thesis**, focusing on **binary verteb
 The project is experimental and not fully optimized. It may contain bugs, and the implementation is primarily designed for constrained hardware (like a GTX 1050 Ti).
 
 ## Setup
+Developed using Python 3.10/3.11, CUDA 12.1, and PyTorch 2.2.1.
 
-To install the required dependencies, use the following command:
+```bash
+pip install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121
+```
+
+To install dependencies, run:
 
 ```bash
 pip install -r requirements.txt
@@ -20,7 +25,7 @@ on **VerSe19** under constrained hardware conditions. The project uses **torchio
 preprocessing classes specifically tailored for the VerSe dataset. 
 
 ### Workflow:
-1. **Preprocessing**: Preprocess, convert and compress the VerSe dataset into the H5 format using `hdf5plugin` for efficient memory usage (e.g. do resampling to 1mm for CT images beforehand).
+1. **Preprocessing**: Preprocess, convert and compress the VerSe dataset into the H5 format using `h5py` and `hdf5plugin` for efficient memory usage (e.g. do resampling to 1mm for CT images beforehand).
 2. **Training**:
    - **Heatmap (Spine Localization)**: Train a heatmap model for spine localization with the following command:
      ```
