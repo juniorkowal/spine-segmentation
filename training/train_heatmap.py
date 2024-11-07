@@ -49,7 +49,8 @@ def train_heatmap(args):
         'dataset_edition': args.dataset_edition,
         'early_stopping': args.early_stopping,
         'target': HEATMAP,
-        'model_name': args.model_name
+        'model_name': args.model_name,
+        'run_id': args.run_id
     }
     
     transform = heatmap_transforms(args.input_shape)

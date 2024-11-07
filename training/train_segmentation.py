@@ -46,9 +46,10 @@ def train_segmentation(args):
         'input_shape': args.input_shape,
         'dataset_path': args.data_path,
         'dataset_edition': args.dataset_edition,
-        'early_stopping': args.dataset_edition,
+        'early_stopping': args.early_stopping,
         'target': tio.LABEL,
-        'model_name': args.model_name
+        'model_name': args.model_name,
+        'run_id': args.run_id
     }
 
     transform_func = binary_segmentation_transforms(args.input_shape)

@@ -223,11 +223,13 @@ def train_loop(config: dict,
     config['optimizer'] = optimizer.__class__.__name__
     config['architecture']: model.__class__.__name__ # type: ignore
 
+    run_id = config.get('run_id') or None
+
     if scheduler:
         config['scheduler'] = scheduler.__class__.__name__
         config['scheduler_params'] = scheduler.state_dict()
 
-    wandb.init(project = 'master-thesis', name = model_name, group='studies', config = config) if use_wandb else None
+    wandb.init(project = 'master-thesis', name = model_name, resume="allow", id=run_id, group='studies', config = config) if use_wandb else None
     images_path = os.path.join(MODELS_PATH, model_name, 'images')
     os.makedirs(images_path, exist_ok=True)
 
@@ -306,6 +308,7 @@ def get_args():
     parser.add_argument('--dataset_edition', type=int, default=19, help='VerSe dataset edition.')
     parser.add_argument('--use_wandb', type=str2bool, nargs='?', const=True, default=False,
                     help='Use wandb for logging.')
+    parser.add_argument('--run_id', type=str, default='', help='wandb run id.')
 
     return parser.parse_args()
 
