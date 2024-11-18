@@ -329,8 +329,8 @@ def get_model(args):
     elif args.model == 'VNet':
         model = MonaiVNet()
     elif "ablation_segformer" in args.model:
-        model = ablation_segformer[int(args.model[-1])]
+        model = ablation_segformer[int(args.model.split('_')[-1])]
     elif "ablation_attention" in args.model:
-        model = ablation_att[int(args.model[-1])]
+        model = ablation_att[int(args.model.split('_')[-1])]
     model = model.to(DEVICE)
     return model
