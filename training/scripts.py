@@ -20,6 +20,8 @@ from utils.constants import DEVICE, H5, MODELS_PATH, NUM_WORKERS
 from networks import *
 from networks.segformer3d import ablation_models_segformer3d as ablation_segformer
 from networks.attention_unet.ablation import ablation_list as ablation_att
+from networks.attention_unet.lambda_attention_unet import get_hybrid_models as hybrid_att
+from networks.attention_unet.lambda_attention_unet import hyperparameter_ablation, content_position_ablation, scope_size_ablation
 # from tqdm.notebook import tqdm
 
 
@@ -166,7 +168,7 @@ def train(model: nn.Module, dataloader: DataLoader, optimizer: optim.Optimizer, 
 
             inputs = data[tio.IMAGE][tio.DATA]
             targets = data[target][tio.DATA]
-
+            
             inputs, targets = inputs.to(DEVICE), targets.to(DEVICE)
 
             optimizer.zero_grad()
@@ -332,5 +334,27 @@ def get_model(args):
         model = ablation_segformer[int(args.model.split('_')[-1])]
     elif "ablation_attention" in args.model:
         model = ablation_att[int(args.model.split('_')[-1])]
+
+    elif "hybrid_attention_params" in args.model:
+        config = hyperparameter_ablation()[int(args.model.split('_')[-1])]
+        config['global_context_size'] = None
+        config['local_context_size'] = 5
+        model = hybrid_att(lambda_config=config)[4] # only bottleneck
+
+    elif "hybrid_attention_content" in args.model: # 0-1
+        config = content_position_ablation()[int(args.model.split('_')[-1])]
+        config['global_context_size'] = None
+        config['local_context_size'] = 5
+        model = hybrid_att(lambda_config=config)[4]
+
+    elif "hybrid_attention_scope" in args.model: # 0-4
+        config = scope_size_ablation()[int(args.model.split('_')[-1])]
+        config['global_context_size'] = None
+        config['local_context_size'] = 5
+        model = hybrid_att(lambda_config=config)[4]     
+
+    elif "hybrid_attention" in args.model:
+        model = hybrid_att()[int(args.model.split('_')[-1])]
+
     model = model.to(DEVICE)
     return model

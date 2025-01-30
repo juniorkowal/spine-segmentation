@@ -111,11 +111,11 @@ def get_hybrid_models(action = 'replace_double',
                                         'num_heads': 4,
                                         'implementation': 1}):
     
-    lambda_models = [get_lambda_att_depth_5(action, lambda_config),
-                     get_lambda_att_depth_4(action, lambda_config),
+    lambda_models = [get_lambda_att_depth_5(action, lambda_config), # all blocks replaced
+                     get_lambda_att_depth_4(action, lambda_config), # 4 out of 5 levels replaced
                      get_lambda_att_depth_3(action, lambda_config),
                      get_lambda_att_depth_2(action, lambda_config),
-                     get_lambda_att_depth_1(action, lambda_config)]
+                     get_lambda_att_depth_1(action, lambda_config)] # only bottleneck replaced
     return lambda_models
 
 

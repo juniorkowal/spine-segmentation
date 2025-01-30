@@ -104,8 +104,8 @@ ablation_list = [
                  depth_ablation(depth=3), depth_ablation(depth=4), depth_ablation(depth=5),
                  features_ablation(init_features=8), features_ablation(init_features=4),
                 #  num_groups_ablation(num_groups=4), num_groups_ablation(num_groups=16),
-                 layer_order_ablation(layer_order='cr'), layer_order_ablation(layer_order='cl'),
-                 layer_order_ablation(layer_order='ce'), layer_order_ablation(layer_order='cri'),
+                #  layer_order_ablation(layer_order='cr'), layer_order_ablation(layer_order='cl'),
+                #  layer_order_ablation(layer_order='ce'), layer_order_ablation(layer_order='cri'),
                  double_conv_ablation(double_conv=False)
                  ]
 
